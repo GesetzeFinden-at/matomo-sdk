@@ -73,7 +73,9 @@ export class MatomoTracker extends events.EventEmitter {
       const response = await fetch(requestUrl);
 
       if (!response.ok) {
-        this.listeners('error').length && this.emit('error', response.status);
+        if (this.listeners('error').length) {
+          this.emit('error', response.status);
+        }
         return;
       }
 
@@ -111,7 +113,9 @@ export class MatomoTracker extends events.EventEmitter {
       });
 
       if (!response.ok) {
-        this.listeners('error').length && this.emit('error', response.status);
+        if (this.listeners('error').length) {
+          this.emit('error', response.status);
+        }
         return;
       }
 

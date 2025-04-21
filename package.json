@@ -30,6 +30,7 @@
     "eslint": "eslint --max-warnings=0 index.ts"
   },
   "devDependencies": {
+    "@eslint/js": "^9.25.1",
     "@tsconfig/node21": "^21.0.4",
     "@types/chai": "^5.2.1",
     "@types/chai-as-promised": "^8.0.2",
@@ -37,16 +38,14 @@
     "@types/node": "^22.14.1",
     "@types/sinon": "^17.0.4",
     "@types/sinon-chai": "^4.0.0",
-    "@typescript-eslint/eslint-plugin": "^5.30.5",
-    "@typescript-eslint/parser": "^5.30.5",
     "chai": "^4.5.0",
     "chai-as-promised": "^8.0.1",
-    "eslint": "^8.19.0",
     "mocha": "^10.0.0",
     "nock": "^13.0.3",
     "sinon": "^14.0.2",
     "sinon-chai": "^3.5.0",
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "typescript-eslint": "^8.31.0"
   },
   "engines": {
     "node": ">=18"
