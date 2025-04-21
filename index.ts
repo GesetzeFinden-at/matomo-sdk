@@ -13,9 +13,6 @@ import {ClientRequest, IncomingMessage} from "http";
 import * as https from "https";
 import * as assert from "assert";
 import * as events from "events";
-import * as qs from "querystring";
-import * as url from "url";
-
 
 /**
  * @constructor
@@ -73,7 +70,9 @@ export class MatomoTracker extends events.EventEmitter {
     options.idsite = this.siteId;
     options.rec = 1;
 
-    const requestUrl = this.trackerUrl + '?' + qs.stringify(options);
+    const requestUrl = this.trackerUrl + '?' + new URLSearchParams(
+      optionValuesToString(options),
+    ).toString();
     const self = this;
     let req: ClientRequest;
     if (this.usesHTTPS) {
@@ -111,17 +110,19 @@ export class MatomoTracker extends events.EventEmitter {
       requests: events.map(query => {
         query.idsite = this.siteId;
         query.rec = 1;
-        return '?' + qs.stringify(query);
+        return '?' + new URLSearchParams(
+          optionValuesToString(query),
+        ).toString();
       })
     });
 
-    const uri = url.parse(this.trackerUrl);
+    const uri = new URL(this.trackerUrl);
 
     const requestOptions = {
       protocol: uri.protocol,
       hostname: uri.hostname,
       port: uri.port,
-      path: uri.path,
+      path: uri.pathname,
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -277,4 +278,13 @@ interface MatomoTrackOptions {
   send_image?: 0;
   ping?: 1;
   bots?: 1;
+}
+
+function optionValuesToString (options: MatomoTrackOptions) {
+  return Object.entries(options).reduce((acc, [key, value]) => {
+    if (value !== undefined) {
+      acc[key] = String(value);
+    }
+    return acc;
+  }, {} as Record<string, string>);
 }
