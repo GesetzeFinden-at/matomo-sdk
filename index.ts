@@ -6,8 +6,6 @@
  * @license MIT
  */
 
-'use strict';
-
 import * as assert from "assert";
 import * as events from "events";
 
@@ -20,7 +18,6 @@ import * as events from "events";
 export class MatomoTracker extends events.EventEmitter {
   readonly siteId: number;
   readonly trackerUrl: string;
-  readonly usesHTTPS: boolean;
 
   constructor(siteId: number | string, trackerUrl: string, noURLValidation?: boolean) {
     super();
@@ -35,9 +32,6 @@ export class MatomoTracker extends events.EventEmitter {
 
     this.siteId = Number(siteId);
     this.trackerUrl = trackerUrl;
-
-    // Use either HTTPS or HTTP agent according to Matomo tracker URL
-    this.usesHTTPS = trackerUrl.startsWith('https');
   }
 
 
@@ -57,10 +51,8 @@ export class MatomoTracker extends events.EventEmitter {
     }
 
     // Set mandatory options
-    // options = options || {};
     if (!options || !options.url) {
       assert.fail('URL to be tracked must be specified.');
-      return;
     }
     options.idsite = this.siteId;
     options.rec = 1;
@@ -88,8 +80,7 @@ export class MatomoTracker extends events.EventEmitter {
   }
 
 
-  // eslint-disable-next-line no-unused-vars
-  async trackBulk(eventItems: MatomoTrackOptions[], callback?: (response: string) => void) {
+  async trackBulk(eventItems: MatomoTrackOptions[]) {
     assert.ok(eventItems && (eventItems.length > 0), 'Events require at least one.');
     assert.ok(this.siteId !== undefined && this.siteId !== null, 'siteId must be specified.');
 
@@ -119,8 +110,7 @@ export class MatomoTracker extends events.EventEmitter {
         return;
       }
 
-      const responseData = await response.text();
-      callback?.(responseData);
+      return response;
     } catch (err) {
       if (this.listeners('error').length) {
         this.emit('error', (err as Error).message);
