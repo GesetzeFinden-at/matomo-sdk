@@ -8,9 +8,6 @@
 
 'use strict';
 
-import * as http from "http";
-import {ClientRequest, IncomingMessage} from "http";
-import * as https from "https";
 import * as assert from "assert";
 import * as events from "events";
 
@@ -52,9 +49,7 @@ export class MatomoTracker extends events.EventEmitter {
    *
    * @param {(String|Object)} options URL to track or options (must contain URL as well)
    */
-  track(options: MatomoSingleTrackOptions | string) {
-    const hasErrorListeners = this.listeners('error').length;
-
+  async track(options: MatomoSingleTrackOptions | string) {
     if (typeof options === 'string') {
       options = {
         url: options
@@ -73,41 +68,31 @@ export class MatomoTracker extends events.EventEmitter {
     const requestUrl = this.trackerUrl + '?' + new URLSearchParams(
       optionValuesToString(options),
     ).toString();
-    const self = this;
-    let req: ClientRequest;
-    if (this.usesHTTPS) {
-      req = https.get(requestUrl, handleResponse);
-    } else {
-      req = http.get(requestUrl, handleResponse);
-    }
 
-    function handleResponse(res: IncomingMessage) {
-      // Check HTTP statuscode for 200 and 30x
-      if (res.statusCode && !/^(20[04]|30[12478])$/.test(res.statusCode.toString())) {
-        if (hasErrorListeners) {
-          self.emit('error', res.statusCode);
-        }
+    try {
+      const response = await fetch(requestUrl);
+
+      if (!response.ok) {
+        this.listeners('error').length && this.emit('error', response.status);
+        return;
+      }
+
+      return response;
+    } catch (err) {
+      if (this.listeners('error').length) {
+        this.emit('error', (err as Error).message);
       }
     }
-
-    req.on('error', err => {
-      hasErrorListeners && this.emit('error', err.message);
-    });
-
-    req.end();
   }
 
 
   // eslint-disable-next-line no-unused-vars
-  trackBulk(events: MatomoTrackOptions[], callback: (response: string) => void) {
-    const hasErrorListeners = this.listeners('error').length;
-
-    assert.ok(events && (events.length > 0), 'Events require at least one.');
+  async trackBulk(eventItems: MatomoTrackOptions[], callback?: (response: string) => void) {
+    assert.ok(eventItems && (eventItems.length > 0), 'Events require at least one.');
     assert.ok(this.siteId !== undefined && this.siteId !== null, 'siteId must be specified.');
 
-
     const body = JSON.stringify({
-      requests: events.map(query => {
+      requests: eventItems.map(query => {
         query.idsite = this.siteId;
         query.rec = 1;
         return '?' + new URLSearchParams(
@@ -116,55 +101,27 @@ export class MatomoTracker extends events.EventEmitter {
       })
     });
 
-    const uri = new URL(this.trackerUrl);
-
-    const requestOptions = {
-      protocol: uri.protocol,
-      hostname: uri.hostname,
-      port: uri.port,
-      path: uri.pathname,
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Content-Length': Buffer.byteLength(body),
-      }
-    };
-    let req: ClientRequest;
-
-    if (this.usesHTTPS) {
-      req = https.request(requestOptions, handleResponse);
-    } else {
-      req = http.request(requestOptions, handleResponse);
-    }
-
-    const self = this;
-
-    function handleResponse(res: IncomingMessage) {
-      if (res.statusCode && !/^(20[04]|30[12478])$/.test(res.statusCode.toString())) {
-        if (hasErrorListeners) {
-          self.emit('error', res.statusCode);
-        }
-      }
-
-      const data: Buffer[] = [];
-
-      res.on('data', chunk => {
-        data.push(chunk);
+    try {
+      const response = await fetch(this.trackerUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body,
       });
 
-      res.on('end', () => {
-        const output = Buffer.concat(data).toString();
-        typeof callback === 'function' && callback(output);
-      });
-    }
-
-    req.on('error', (err) => {
-        hasErrorListeners && this.emit('error', err.message);
+      if (!response.ok) {
+        this.listeners('error').length && this.emit('error', response.status);
+        return;
       }
-    );
 
-    req.write(body);
-    req.end();
+      const responseData = await response.text();
+      callback?.(responseData);
+    } catch (err) {
+      if (this.listeners('error').length) {
+        this.emit('error', (err as Error).message);
+      }
+    }
   }
 }
 
@@ -280,7 +237,7 @@ interface MatomoTrackOptions {
   bots?: 1;
 }
 
-function optionValuesToString (options: MatomoTrackOptions) {
+function optionValuesToString(options: MatomoTrackOptions) {
   return Object.entries(options).reduce((acc, [key, value]) => {
     if (value !== undefined) {
       acc[key] = String(value);
