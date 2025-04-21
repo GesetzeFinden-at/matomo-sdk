@@ -1,5 +1,41 @@
-.idea/
-node_modules/
-index.js
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+node_modules
+
+# testing
+/coverage
+
+# production
+/build
+
+# typescript
+*.js
+# *.d.ts
 index.d.ts
-*test.*
+index.test.js
+index.test.d.ts
+
+# misc
+.DS_Store
+
+# environments
+.env*.local
+
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+cache
+env
+.env
+.npmrc
+
+.vscode
+
+# For local test files e.g for checking parsing outputs
+**/.local/
+.venv
+
+# Jetbrains
+.idea
