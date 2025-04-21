@@ -23,12 +23,12 @@ import * as url from "url";
  * @param {String} trackerUrl URL of your Matomo instance
  * @param {Boolean} [noURLValidation]  Set to true if the `piwik.php` or `matomo.php` has been renamed
  */
-export default class MatomoTracker extends events.EventEmitter {
-  private readonly siteId: number;
-  private readonly trackerUrl: string;
-  private readonly usesHTTPS: boolean;
+export class MatomoTracker extends events.EventEmitter {
+  readonly siteId: number;
+  readonly trackerUrl: string;
+  readonly usesHTTPS: boolean;
 
-  constructor(siteId: number, trackerUrl: string, noURLValidation?: boolean) {
+  constructor(siteId: number | string, trackerUrl: string, noURLValidation?: boolean) {
     super();
 
     events.EventEmitter.call(this);
@@ -39,7 +39,7 @@ export default class MatomoTracker extends events.EventEmitter {
       assert.ok(trackerUrl.endsWith('matomo.php') || trackerUrl.endsWith('piwik.php'), 'A tracker URL must end with "matomo.php" or "piwik.php"');
     }
 
-    this.siteId = siteId;
+    this.siteId = Number(siteId);
     this.trackerUrl = trackerUrl;
 
     // Use either HTTPS or HTTP agent according to Matomo tracker URL
