@@ -6,8 +6,8 @@
  * @license MIT
  */
 
-import * as assert from "assert";
 import * as events from "events";
+import invariant from 'tiny-invariant';
 
 /**
  * @constructor
@@ -24,10 +24,10 @@ export class MatomoTracker extends events.EventEmitter {
 
     events.EventEmitter.call(this);
 
-    assert.ok(siteId && (typeof siteId === 'number' || typeof siteId === 'string'), 'Matomo siteId required.');
-    assert.ok(trackerUrl && typeof trackerUrl === 'string', 'Matomo tracker URL required, e.g. http://example.com/matomo.php');
+    invariant(siteId && (typeof siteId === 'number' || typeof siteId === 'string'), 'Matomo siteId required.');
+    invariant(trackerUrl && typeof trackerUrl === 'string', 'Matomo tracker URL required, e.g. http://example.com/matomo.php');
     if (!noURLValidation) {
-      assert.ok(trackerUrl.endsWith('matomo.php') || trackerUrl.endsWith('piwik.php'), 'A tracker URL must end with "matomo.php" or "piwik.php"');
+      invariant(trackerUrl.endsWith('matomo.php') || trackerUrl.endsWith('piwik.php'), 'A tracker URL must end with "matomo.php" or "piwik.php"');
     }
 
     this.siteId = Number(siteId);
@@ -50,10 +50,8 @@ export class MatomoTracker extends events.EventEmitter {
       };
     }
 
-    // Set mandatory options
-    if (!options || !options.url) {
-      assert.fail('URL to be tracked must be specified.');
-    }
+    invariant(options && options.url, 'URL to be tracked must be specified.');
+
     options.idsite = this.siteId;
     options.rec = 1;
 
@@ -81,8 +79,8 @@ export class MatomoTracker extends events.EventEmitter {
 
 
   async trackBulk(eventItems: MatomoTrackOptions[]) {
-    assert.ok(eventItems && (eventItems.length > 0), 'Events require at least one.');
-    assert.ok(this.siteId !== undefined && this.siteId !== null, 'siteId must be specified.');
+    invariant(eventItems && (eventItems.length > 0), 'Events require at least one.');
+    invariant(this.siteId !== undefined && this.siteId !== null, 'siteId must be specified.');
 
     const body = JSON.stringify({
       requests: eventItems.map(query => {
