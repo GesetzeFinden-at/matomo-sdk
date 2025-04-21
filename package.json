@@ -25,7 +25,7 @@
   },
   "scripts": {
     "build": "tsc",
-    "test": "npm run build && npm run mocha && npm run eslint",
+    "test": "npm run build -- --noEmit && npm run mocha && npm run eslint",
     "mocha": "mocha --reporter spec --exit",
     "eslint": "eslint --max-warnings=0 index.ts"
   },
