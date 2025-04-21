@@ -6,7 +6,7 @@
  * @license MIT
  */
 
-import * as events from "events";
+import { EventEmitter } from "events";
 import invariant from 'tiny-invariant';
 
 /**
@@ -15,14 +15,14 @@ import invariant from 'tiny-invariant';
  * @param {String} trackerUrl URL of your Matomo instance
  * @param {Boolean} [noURLValidation]  Set to true if the `piwik.php` or `matomo.php` has been renamed
  */
-export class MatomoTracker extends events.EventEmitter {
+export class MatomoTracker extends EventEmitter {
   readonly siteId: number;
   readonly trackerUrl: string;
 
   constructor(siteId: number | string, trackerUrl: string, noURLValidation?: boolean) {
     super();
 
-    events.EventEmitter.call(this);
+    EventEmitter.call(this);
 
     invariant(siteId && (typeof siteId === 'number' || typeof siteId === 'string'), 'Matomo siteId required.');
     invariant(trackerUrl && typeof trackerUrl === 'string', 'Matomo tracker URL required, e.g. http://example.com/matomo.php');
