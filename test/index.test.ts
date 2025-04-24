@@ -1,141 +1,136 @@
-'use strict';
-
-import chai from 'chai';
-import sinon from 'sinon';
-import sinonChai from 'sinon-chai';
-import chaiAsPromised from 'chai-as-promised';
+import type { MockInstance } from 'vitest';
+import { MatomoTracker } from '../src/index';
 import nock from 'nock';
-import { MatomoTracker } from '../index'; // Assuming MatomoTracker is exported as an ESM module
-
-chai.should();
-chai.use(sinonChai);
-chai.use(chaiAsPromised);
 
 describe('MatomoTracker()', () => {
   it('should throw if no parameters provided', () => {
     // @ts-expect-error - Intentionally testing behavior with missing parameter
-    (() => new MatomoTracker()).should.throw(/siteId/);
+    expect(() => new MatomoTracker()).toThrow(/siteId/);
   });
 
   it('should throw if no siteId is provided', () => {
     // @ts-expect-error - Intentionally testing behavior with missing parameter
-    (() => new MatomoTracker(null)).should.throw(/siteId/);
+    expect(() => new MatomoTracker(null)).toThrow(/siteId/);
   });
 
   it('should throw if siteId provided is neither a number nor a string', () => {
     // @ts-expect-error - Intentionally testing behavior with missing parameter
-    (() => new MatomoTracker({ foo: 'bar' })).should.throw(/siteId/);
+    expect(() => new MatomoTracker({ foo: 'bar' })).toThrow(/siteId/);
     // @ts-expect-error - Intentionally testing behavior with missing parameter
-    (() => new MatomoTracker([1, 2, 3])).should.throw(/siteId/);
+    expect(() => new MatomoTracker([1, 2, 3])).toThrow(/siteId/);
     // @ts-expect-error - Intentionally testing behavior with missing parameter
-    (() => new MatomoTracker(true)).should.throw(/siteId/);
+    expect(() => new MatomoTracker(true)).toThrow(/siteId/);
     // @ts-expect-error - Intentionally testing behavior with missing parameter
-    (() => new MatomoTracker(() => true)).should.throw(/siteId/);
-    (() => new MatomoTracker(1, 'http://example.com/matomo.php')).should.not.throw();
-    (() => new MatomoTracker('siteId', 'http://example.com/matomo.php')).should.not.throw();
+    expect(() => new MatomoTracker(() => true)).toThrow(/siteId/);
+    expect(() => new MatomoTracker(1, 'http://example.com/matomo.php')).not.toThrow();
+    expect(() => new MatomoTracker('siteId', 'http://example.com/matomo.php')).not.toThrow();
   });
 
   it('should throw if no trackerUrl is provided', () => {
     // @ts-expect-error - Intentionally testing behavior with missing parameter
-    (() => new MatomoTracker(1)).should.throw(/tracker/);
+    expect(() => new MatomoTracker(1)).toThrow(/tracker/);
   });
 
   it('should throw if trackerUrl is not valid (no matomo.php endpoint)', () => {
-    (() => new MatomoTracker(1, 'http://example.com/index.php')).should.throw(/tracker/);
+    expect(() => new MatomoTracker(1, 'http://example.com/index.php')).toThrow(/tracker/);
   });
 
   it('should allow invalid URL if noURLValidation is set', () => {
-    (() => new MatomoTracker(1, 'http://example.com/index.php', true)).should.not.throw(/tracker/);
+    expect(() => new MatomoTracker(1, 'http://example.com/index.php', true)).not.toThrow(/tracker/);
   });
 
   it('should have properties siteId/trackerUrl', () => {
     const matomo = new MatomoTracker(1, 'http://example.com/matomo.php');
-    matomo.siteId.should.equal(1);
-    matomo.trackerUrl.should.equal('http://example.com/matomo.php');
+    expect(matomo.siteId).toBe(1);
+    expect(matomo.trackerUrl).toBe('http://example.com/matomo.php');
   });
 });
 
 describe('#track()', () => {
   let httpMock: nock.Interceptor;
-  let httpSpy: sinon.SinonSpy;
+  let fetchSpy: MockInstance;
   let matomo: MatomoTracker;
 
   beforeEach(() => {
     matomo = new MatomoTracker(1, 'http://example.com/matomo.php');
-
     httpMock = nock('http://example.com')
       .filteringPath(() => '/matomo.php')
       .get('/matomo.php');
-    httpSpy = sinon.spy(global, 'fetch');
+    fetchSpy = vi.spyOn(global, 'fetch');
   });
 
   afterEach(() => {
     matomo = null!;
     nock.restore();
-    httpSpy.restore();
+    vi.restoreAllMocks();
   });
 
-  it('should throw without parameter', () => {
+  it('should throw without parameter', async() => {
     // @ts-expect-error - Intentionally testing behavior with missing parameter
-    matomo.track().should.eventually.throw(/URL/);
+    await expect(matomo.track()).rejects.toThrow(/URL/);
   });
 
   it('should accept a url as string', async() => {
     httpMock.reply(200);
     await matomo.track('http://mywebsite.com/');
-    httpSpy.should.have.been.calledWith(
+    expect(fetchSpy).toHaveBeenCalledWith(
       'http://example.com/matomo.php?url=http%3A%2F%2Fmywebsite.com%2F&idsite=1&rec=1'
     );
   });
 
-  it('should accept a parameter object', () => {
+  it('should accept a parameter object', async() => {
     httpMock.reply(200);
-    matomo.track({ url: 'http://mywebsite.com/' });
-    httpSpy.should.have.been.calledWith(
+    await matomo.track({ url: 'http://mywebsite.com/' });
+    expect(fetchSpy).toHaveBeenCalledWith(
       'http://example.com/matomo.php?url=http%3A%2F%2Fmywebsite.com%2F&idsite=1&rec=1'
     );
   });
 
-  it('should throw without options.url', () => {
+  it('should throw without options.url', async() => {
     // @ts-expect-error - Intentionally testing behavior with missing parameter
-    matomo.track({}).should.eventually.throw(/URL/);
+    await expect(matomo.track({})).rejects.toThrow(/URL/);
   });
 
-  it('should emit an error if HTTP response status is not 200/30x', (done) => {
+  it('should emit an error if HTTP response status is not 200/30x', async() => {
     httpMock.reply(404);
 
-    matomo.on('error', (param: string) => {
-      param.should.match(/^(404|getaddrinfo ENOTFOUND)/);
-      done();
+    const errorPromise = new Promise((resolve) => {
+      matomo.on('error', (param: string) => {
+        console.log(param);
+        expect(String(param)).toMatch(/^(404|getaddrinfo ENOTFOUND)/);
+        resolve(undefined);
+      });
     });
-    matomo.track({ url: 'http://mywebsite.com/' });
+
+    await matomo.track({ url: 'http://mywebsite.com/' });
+    await errorPromise;
   });
 });
 
 describe('#track() - HTTPS support', () => {
   let httpsMock: nock.Interceptor;
-  let httpsSpy: sinon.SinonSpy;
+  let fetchSpy: MockInstance;
   let matomo: MatomoTracker;
 
-  before(() => {
+  beforeEach(() => {
     matomo = new MatomoTracker(1, 'https://example.com/matomo.php');
 
     httpsMock = nock('https://example.com')
       .filteringPath(() => '/matomo.php')
       .get('/matomo.php');
-    httpsSpy = sinon.spy(global, 'fetch');
+    fetchSpy = vi.spyOn(global, 'fetch');
   });
 
-  after(() => {
+  afterEach(() => {
     matomo = null!;
     nock.restore();
-    httpsSpy.restore();
+    vi.restoreAllMocks();
   });
 
-  it('should use HTTPS to access Matomo, when stated in the URL', () => {
+  it('should use HTTPS to access Matomo, when stated in the URL', async() => {
     httpsMock.reply(200);
-    matomo.track('http://mywebsite.com/');
-    httpsSpy.should.have.been.calledWith(
+    await matomo.track('http://mywebsite.com/');
+    expect(fetchSpy).toHaveBeenCalledWith(
       'https://example.com/matomo.php?url=http%3A%2F%2Fmywebsite.com%2F&idsite=1&rec=1'
     );
   });
@@ -143,7 +138,7 @@ describe('#track() - HTTPS support', () => {
 
 describe('#bulkTrack()', () => {
   let httpMock: nock.Interceptor;
-  let httpSpy: sinon.SinonSpy;
+  let fetchSpy: MockInstance;
   let matomo: MatomoTracker;
 
   const events = [
@@ -156,54 +151,58 @@ describe('#bulkTrack()', () => {
     },
   ];
 
-  before(() => {
+  beforeEach(() => {
     matomo = new MatomoTracker(1, 'http://example.com/matomo.php');
 
     httpMock = nock('http://example.com')
       .filteringPath(() => '/matomo.php')
       .get('/matomo.php');
-    httpSpy = sinon.spy(global, 'fetch');
+    fetchSpy = vi.spyOn(global, 'fetch');
   });
 
-  after(() => {
+  afterEach(() => {
     matomo = null!;
     nock.restore();
-    httpSpy.restore();
+    vi.restoreAllMocks();
   });
 
-  it('should throw without parameter', () => {
+  it('should throw without parameter', async() => {
     // @ts-expect-error - Intentionally testing behavior with missing parameter
-    matomo.trackBulk().should.eventually.throw();
+    await expect(matomo.trackBulk()).rejects.toThrow();
   });
 
-  it('should POST to server', () => {
+  it('should POST to server', async() => {
     httpMock.reply(200);
-    matomo.trackBulk(events);
+    await matomo.trackBulk(events);
+    expect(fetchSpy).toHaveBeenCalled();
   });
 });
 
 describe('#bulkTrack() - HTTPS support', () => {
   let httpsMock: nock.Interceptor;
-  let httpsSpy: sinon.SinonSpy;
+  let fetchSpy: MockInstance;
   let matomo: MatomoTracker;
 
-  before(() => {
+  beforeEach(() => {
     matomo = new MatomoTracker(1, 'https://127.0.0.1/matomo.php');
 
     httpsMock = nock('https://127.0.0.1')
       .filteringPath(() => '/matomo.php')
       .get('/matomo.php');
-    httpsSpy = sinon.spy(global, 'fetch');
+    fetchSpy = vi.spyOn(global, 'fetch');
   });
 
-  it('should use HTTPS to access Matomo, when stated in the URL', () => {
-    httpsMock.reply(200);
-    matomo.track('http://mywebsite.com/');
-  });
-
-  after(() => {
+  afterEach(() => {
     matomo = null!;
     nock.restore();
-    httpsSpy.restore();
+    vi.restoreAllMocks();
+  });
+
+  it('should use HTTPS to access Matomo, when stated in the URL', async() => {
+    httpsMock.reply(200);
+    await matomo.track('http://mywebsite.com/');
+    expect(fetchSpy).toHaveBeenCalledWith(
+      'https://127.0.0.1/matomo.php?url=http%3A%2F%2Fmywebsite.com%2F&idsite=1&rec=1'
+    );
   });
 });

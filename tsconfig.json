@@ -4,5 +4,8 @@
     "noImplicitAny": true,
     "strict": true,
     "declaration": true,
+    "module": "Preserve",
+    "moduleResolution": "bundler",
+    "types": ["vitest/globals"]
   }
 }
