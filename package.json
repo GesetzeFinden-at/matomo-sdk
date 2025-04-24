@@ -1,18 +1,16 @@
 {
-  "name": "matomo-tracker",
-  "version": "3.0.0-beta.3",
+  "name": "@gesetzefinden-at/core",
+  "version": "1.0.0-beta.0",
   "description": "A wrapper for the Matomo tracking HTTP API",
   "keywords": [
-    "piwik",
     "matomo",
     "analytics",
     "tracking"
   ],
-  "homepage": "https://github.com/matomo-org/matomo-nodejs-tracker",
-  "bugs": "https://github.com/matomo-org/matomo-nodejs-tracker/issues",
+  "homepage": "https://github.com/GesetzeFinden-at/matomo-sdk",
   "author": {
-    "name": "Frederic Hemberger",
-    "url": "https://github.com/matomo-org"
+    "name": "GesetzeFinden.at",
+    "url": "https://github.com/GesetzeFinden-at"
   },
   "files": [
     "dist"
@@ -26,7 +24,7 @@
   "type": "module",
   "repository": {
     "type": "git",
-    "url": "git://github.com/matomo-org/matomo-nodejs-tracker.git"
+    "url": "git+https://github.com/GesetzeFinden-at/matomo-sdk.git"
   },
   "scripts": {
     "build": "tsup src/index.ts",
