@@ -125,7 +125,7 @@ interface MatomoSingleTrackOptions extends MatomoTrackOptions {
 /**
  * Interface for Matomo tracking options
  */
-interface MatomoTrackOptions {
+export interface MatomoTrackOptions {
   [key: string]: number | string | undefined;
 
   /** Required: The ID of the website we're tracking a visit/action for */
