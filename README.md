@@ -104,4 +104,4 @@ tracker.track('http://example.com/track/this/url').then(() => {
 
 ## License
 
-[MIT License](http://en.wikipedia.org/wiki/MIT_License)
+[MIT License](./LICENSE)
