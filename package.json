@@ -1,6 +1,6 @@
 {
   "name": "@gesetzefinden-at/matomo-sdk",
-  "version": "1.0.0-beta.0",
+  "version": "1.0.0-beta.1",
   "description": "A wrapper for the Matomo tracking HTTP API",
   "keywords": [
     "matomo",
