@@ -46,7 +46,9 @@ describe('MatomoTracker()', () => {
   });
 });
 
-describe('#track()', () => {
+
+
+describe('#trackUrl()', () => {
   let httpMock: nock.Interceptor;
   let fetchSpy: MockInstance;
   let matomo: MatomoTracker;
@@ -67,12 +69,12 @@ describe('#track()', () => {
 
   it('should throw without parameter', async() => {
     // @ts-expect-error - Intentionally testing behavior with missing parameter
-    await expect(matomo.track()).rejects.toThrow(/URL/);
+    await expect(matomo.trackUrl()).rejects.toThrow(/URL/);
   });
 
   it('should accept a url as string', async() => {
     httpMock.reply(200);
-    await matomo.track('http://mywebsite.com/');
+    await matomo.trackUrl('http://mywebsite.com/');
     expect(fetchSpy).toHaveBeenCalledWith(
       'http://example.com/matomo.php?url=http%3A%2F%2Fmywebsite.com%2F&idsite=1&rec=1'
     );
@@ -80,7 +82,7 @@ describe('#track()', () => {
 
   it('should accept a parameter object', async() => {
     httpMock.reply(200);
-    await matomo.track({ url: 'http://mywebsite.com/' });
+    await matomo.trackUrl({ url: 'http://mywebsite.com/' });
     expect(fetchSpy).toHaveBeenCalledWith(
       'http://example.com/matomo.php?url=http%3A%2F%2Fmywebsite.com%2F&idsite=1&rec=1'
     );
@@ -88,7 +90,7 @@ describe('#track()', () => {
 
   it('should throw without options.url', async() => {
     // @ts-expect-error - Intentionally testing behavior with missing parameter
-    await expect(matomo.track({})).rejects.toThrow(/URL/);
+    await expect(matomo.trackUrl({})).rejects.toThrow(/URL/);
   });
 
   it('should emit an error if HTTP response status is not 200/30x', async() => {
@@ -102,7 +104,7 @@ describe('#track()', () => {
       });
     });
 
-    await matomo.track({ url: 'http://mywebsite.com/' });
+    await matomo.trackUrl({ url: 'http://mywebsite.com/' });
     await errorPromise;
   });
 });
@@ -129,7 +131,7 @@ describe('#track() - HTTPS support', () => {
 
   it('should use HTTPS to access Matomo, when stated in the URL', async() => {
     httpsMock.reply(200);
-    await matomo.track('http://mywebsite.com/');
+    await matomo.trackUrl('http://mywebsite.com/');
     expect(fetchSpy).toHaveBeenCalledWith(
       'https://example.com/matomo.php?url=http%3A%2F%2Fmywebsite.com%2F&idsite=1&rec=1'
     );
@@ -200,7 +202,7 @@ describe('#bulkTrack() - HTTPS support', () => {
 
   it('should use HTTPS to access Matomo, when stated in the URL', async() => {
     httpsMock.reply(200);
-    await matomo.track('http://mywebsite.com/');
+    await matomo.trackUrl('http://mywebsite.com/');
     expect(fetchSpy).toHaveBeenCalledWith(
       'https://127.0.0.1/matomo.php?url=http%3A%2F%2Fmywebsite.com%2F&idsite=1&rec=1'
     );

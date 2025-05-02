@@ -36,22 +36,16 @@ export class MatomoTracker extends EventEmitter {
 
 
   /**
-   * Executes the call to the Matomo tracking API
+   * Low-level wrapper for the Matomo tracking API
    *
    * For a list of tracking option parameters see
    * https://developer.matomo.org/api-reference/tracking-api
    *
-   * @param {(String|Object)} options URL to track or options (must contain URL as well)
+   * For general usage, prefer using specific methods like `trackUrl`, `trackEvent`, etc.
+   *
+   * @param options URL to track or options (must contain URL as well)
    */
-  async track(options: MatomoSingleTrackOptions | string) {
-    if (typeof options === 'string') {
-      options = {
-        url: options
-      };
-    }
-
-    invariant(options && options.url, 'URL to be tracked must be specified.');
-
+  async track(options: MatomoTrackOptions) {
     options.idsite = this.siteId;
     options.rec = 1;
 
@@ -75,6 +69,57 @@ export class MatomoTracker extends EventEmitter {
         this.emit('error', (err as Error).message);
       }
     }
+  }
+
+
+  /**
+   * Track page views
+   *
+   * @param options Matomo tracking options
+   */
+  async trackUrl(options: MatomoSingleTrackOptions | string) {
+    if (typeof options === 'string') {
+      options = {
+        url: options
+      };
+    }
+
+    invariant(options && options.url, 'URL to be tracked must be specified.');
+    return this.track(options);
+  }
+
+
+  /**
+   * Track custom events
+   *
+   * Automatically sets the `ca` (custom action) flag to 1, which enables non-page-view event tracking.
+   *
+   * @param options Matomo tracking options
+   */
+  async trackEvent(options: MatomoTrackOptions) {
+    invariant(options && options.e_c && options.e_a, 'Event category and action must be specified.');
+
+    return this.track({
+      ...options,
+      ca: 1,
+    });
+  }
+
+
+  /**
+   * Track content impressions and interactions
+   *
+   * Automatically sets the `ca` (custom action) flag to 1, which enables non-page-view event tracking.
+   *
+   * @param options Matomo tracking options
+   */
+  async trackContent(options: MatomoTrackOptions) {
+    invariant(options && options.c_n && options.c_p, 'Content name and piece must be specified.');
+
+    return this.track({
+      ...options,
+      ca: 1,
+    });
   }
 
 
